@@ -6,6 +6,8 @@ import pandas as pd
 import pymongo
 import matplotlib.pyplot as plt 
 import numpy as np
+import base64
+import io
 # Load csv dataset
 # data = pd.read_csv('train.csv')
 # data = data.drop(data.index[30:42000])
@@ -58,13 +60,17 @@ def read_data():
     return df
 
     # DASH
-b = read_data()
+
 
 def pixel(data):
     data.drop(data.columns[[0,1]], axis = 1, inplace = True)
     sample_size = data.shape[0] # Training set size
     validation_size = int(data.shape[0]*0.1) # Validation set si
     train_x = np.asarray(data.iloc[:sample_size-validation_size,1:]).reshape([sample_size-validation_size,28,28,1]) # taking all columns expect column 0
+    buf = io.BytesIO()
     plt.imshow(train_x[0].reshape([28,28]),cmap="Blues") 
     plt.axis("off")
-    return plt
+    plt.savefig("buf", format = "png")
+    plt.close()
+    data = base64.b64encode(buf.getbuffer()).decode("utf8")
+    return data

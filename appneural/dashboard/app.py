@@ -1,4 +1,5 @@
 from os import read
+import re
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,7 +8,13 @@ import pandas as pd
 # from push import read_data
 from dash.dependencies import Input, Output, State
 from push import read_only, read_data
-
+import base64
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from dash.exceptions import PreventUpdate
+import time
 # read data in from database and only show 10 of them in tge dash datatable since this is stable for the process LOL
     # df_train = read_data()
     # dfObj1 = df_train.head(15)
@@ -22,7 +29,12 @@ from push import read_only, read_data
 # dataframe used = df / count status next to the dashboard 
 # to emphasize the object shown in the dataframe
 
-df1 = read_only(1)
+def b64_image(image_filename):
+    with open(image_filename, 'rb') as f:
+        image = f.read()
+    return 'data:image/png;base64,' + base64.b64encode(image).decode('utf-8')
+
+image_filename = 'plt.png'
 app = dash.Dash(__name__)
 
 
@@ -96,9 +108,10 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
     elif tab == 'tab-2':
         return html.Div([
     
-    dcc.Input(id='input-1-state', type='number', value='1',max =29, min =-0),
+    dcc.Input(id='input-1-state', type='number',max =29, min =-0),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
-    html.Div(id='output-state')
+    html.Div(id='output-state'),
+    # html.Img(src='/assets/plt.png')
     ])
 
 
@@ -113,20 +126,44 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
 
 @app.callback(Output('output-state', 'children'),
                 Input('submit-button-state', 'n_clicks'),
-                State('input-1-state', 'value'))
+                State('input-1-state', 'value'), prevent_initial_call=True)
 def update_output(n_clicks, input1):
+    if n_clicks is None:
+        raise PreventUpdate
+    if input1== None:
+        return html.Div("No input " + str(n_clicks) ) 
     index = int(input1)
     obj1= read_only(index)
     
+    data = obj1
+    data.drop(data.columns[[0,1]], axis = 1, inplace = True)
+    sample_size = data.shape[0]
+    validation_size = int(data.shape[0]*0.1)
+    train_x = np.asarray(data.iloc[:sample_size-validation_size,1:]).reshape([sample_size-validation_size,28,28,1]) # taking all columns expect column 0
+    plt.imshow(train_x[0].reshape([28,28]),cmap="Blues") 
+    plt.axis("off")
+    time.sleep(2)
+    plt.savefig("plt.png")
+    time.sleep(1)
+
+
     
-    return u'''
-        Function has been used {} times,
-        Input 1 is "{}"\n \n
-        Index of one out of the database come out: 
-        
-    '''.format(n_clicks, obj1)
+    return  html.Div([
+    html.Div(
+        "You have selected: " + str(input1) + " ||||| Function used " + str(n_clicks)  + " amount of times|||||||||||||| RAW DATA = " 
+    )
+    # ])
+    ,
+    html.Img(src=b64_image(image_filename))])
+    
 
 
+    # return u'''
+    #     Function has been used {} times,\n \n
+    #     Index of one out of the database come out: "{}"
+    #     id: "{}"
+    #     data:image/png;base64,{}
+    # '''.format(n_clicks, obj1,input1,dataa  )
 
 if __name__ == '__main__':
     app.run_server(debug=True)
