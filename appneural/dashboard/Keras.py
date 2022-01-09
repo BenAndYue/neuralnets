@@ -10,7 +10,8 @@ from keras.optimizers import Adam,RMSprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ReduceLROnPlateau
 from keras.models import model_from_json
-import pickle
+import tensorflow as tf
+
 
 np.random.seed(1) # seed
 df_train = pd.read_csv("train.csv") # Loading Dataset
@@ -45,18 +46,18 @@ train_x = train_x/255
 val_x = val_x/255
 test_x = test_x/255
 
-# plotting the first 30 images
-rows = 1 # defining no. of rows in figure
-cols = 1 # defining no. of colums in figure
+# # plotting the first 30 images
+# rows = 1 # defining no. of rows in figure
+# cols = 1 # defining no. of colums in figure
 
-f = plt.figure(figsize=(2*cols,2*rows)) # defining a figure 
-for i in range(rows*cols): 
-    f.add_subplot(rows,cols,i+1) # adding sub plot to figure on each iteration
-    plt.imshow(train_x[i].reshape([28,28]),cmap="Blues") 
-    plt.axis("off")
-    print(train_y[i])
-    plt.title(str(train_y[i]), y=-0.15,color="black")
-plt.savefig("digits.png")
+# f = plt.figure(figsize=(2*cols,2*rows)) # defining a figure 
+# for i in range(rows*cols): 
+#     f.add_subplot(rows,cols,i+1) # adding sub plot to figure on each iteration
+#     plt.imshow(train_x[i].reshape([28,28]),cmap="Blues") 
+#     plt.axis("off")
+#     print(train_y[i])
+#     plt.title(str(train_y[i]), y=-0.15,color="black")
+# plt.savefig("digits.png")
 
 
 # # Cheacking frequency of digits in TRAINING and validation set
@@ -98,6 +99,7 @@ plt.savefig("digits.png")
 # plt.savefig('digit_frequency_val.png')
 # plt.show()
 
+# printing the first image set to 1:1 to only print the first or selected first for testing
 # plotting the first 30 images
 rows = 1 # defining no. of rows in figure
 cols = 1 # defining no. of colums in figure
@@ -140,11 +142,23 @@ model.summary()
 
 # training the model
 epochs = 10
-batch_size = 160
+batch_size = 150
 history_1 = model.fit(train_x,train_y,batch_size=batch_size,epochs=epochs)
 
 
 
+
+
+# second try loading the model 
+model.save('final_try.h5')
+
+# loading model
+
+# global model
+modell = tf.keras.models.load_model('final_try.h5',compile=False)
+
+
+# doesnt save correctly the model for a reason idk
 # serialize model to JSON
 model_json = model.to_json()
 with open("model.json", "w") as json_file:

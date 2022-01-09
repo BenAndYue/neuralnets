@@ -9,7 +9,7 @@ import numpy as np
 import base64
 import io
 # Load csv dataset
-# data = pd.read_csv('train.csv')
+# data = pd.read_csv('test.csv')
 # data = data.drop(data.index[30:42000])
 
 # # making smaller the database
@@ -22,11 +22,11 @@ import io
 # # Insert collection
 # collection.insert_many(data_dict)
 
-# plt.figure(figsize=(15,7))
+# # plt.figure(figsize=(15,7))
 # g = sns.countplot(Y_train, palette="icefire")
 # plt.title("Number of digit classes")
 
-
+# reading from the training data to give an insight!
 def read_only(index):
     indexxx = int(index)
 
@@ -37,12 +37,27 @@ def read_only(index):
     findByID = { "index": indexxx }
     db = client['mydb']
     #select the collection within the database
-    test = db.test
+    train = db.train
     #convert entire collection to Pandas dataframe
-    test = pd.DataFrame(list(test.find(findByID)))
+    test = pd.DataFrame(list(train.find(findByID)))
     return test
 
 
+# reading from the training data to give an insight!
+def read_test(index):
+    indexxx = int(index)
+
+    client = MongoClient()
+    #point the client at mongo URI
+    client =  MongoClient("mongodb+srv://mon:key@cluster0.wm7jq.mongodb.net/mydb?retryWrites=true&w=majority")
+    #select database
+    findByID = { "index": indexxx }
+    db = client['mydb']
+    #select the collection within the database
+    train = db.test
+    #convert entire collection to Pandas dataframe
+    test = pd.DataFrame(list(train.find(findByID)))
+    return test
 
 def read_data():
     # getting data from the database
