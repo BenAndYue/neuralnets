@@ -37,6 +37,7 @@ def b64_image(image_filename):
 
 image_filename = 'plt.png'
 image_filename2 = 'plt2.png'
+image_filename3= 'plt3.png'
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
@@ -59,12 +60,12 @@ app.layout = html.Div([
                 selected_className='custom-tab--selected'
             ),
             dcc.Tab(
-                label='Keras',
+                label='Keras CNN',
                 value='tab-3', className='custom-tab',
                 selected_className='custom-tab--selected'
             ),
             dcc.Tab(
-                label='Pytorch',
+                label='Keras DNN',
                 value='tab-4',
                 className='custom-tab',
                 selected_className='custom-tab--selected'
@@ -96,30 +97,65 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
     ),
     elif tab == 'tab-2':
         return html.Div([
-    
+    html.Div('Look at the train data. A small sample of the test data is saved of the dast data because loading it would be to long.', className="app-header--title"),
+    html.Br(),
+    html.Div("Select a number between to display the data of the test data."),
     dcc.Input(id='input-1-state', type='number',max =29, min =-0),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
     html.Div(id='output-state'),
     # html.Img(src='/assets/plt.png')
     ])
 
-
-
-
-
     elif tab == 'tab-3':
         return html.Div(
         className="app-header",
         children=[
-            html.Div('Keras', className="app-header--title"),
+            html.Div('Keras CNN', className="app-header--title"),
                 html.Div(dcc.Input(id='input-on-submit', type='number',max =29, min =-0)),
                 html.Button('Submit', id='submit-val', n_clicks=0),
                 html.Div(id='container-button-basic',
                 children='Enter a value and press submit')
 ]),
     elif tab == 'tab-4':
-        return html.Div([
-            html.H3('Tab content 4'),
+        return  html.Div(
+        className="app-header",
+        children=[
+            html.Div('Keras DNN', className="app-header--title"),
+                html.Div(dcc.Input(id='input-on-submit2', type='number',max =29, min =-0)),
+                html.Button('Submit', id='submit-val2', n_clicks=0),
+                html.Div(id='container-button-basic2',
+                children='Enter a value and press submit')
+]),
+# tab Keras DNN
+@app.callback(
+    Output('container-button-basic2', 'children'),
+    Input('submit-val2', 'n_clicks'),
+    State('input-on-submit2', 'value'))
+def update_output(n_clicks, value):
+    # if zero no reposne or no reload of the page
+    if n_clicks is None:
+        raise PreventUpdate
+    if value== None:
+        return html.Div("No input " + str(n_clicks) ) 
+    # getting data from the database based on value given
+    index = int(value)
+    testdf = read_test(index)
+    testdf.drop(testdf.columns[[0,1]], axis = 1, inplace = True)
+    test_x = np.asarray(testdf.iloc[:,:]).reshape([-1,28,28,1])
+    test_x = test_x/255
+    # load model
+    global model
+    model = tf.keras.models.load_model('final_try2.h5',compile=False)
+
+    test_y = np.argmax(model.predict(test_x),axis =1)
+    plt.imshow(test_x[0].reshape([28,28]),cmap="Blues")
+    plt.axis("off")
+    plt.title("Predicted number:" + str(test_y[0]))
+    plt.savefig("plt3.png")
+
+    return html.Div([
+        html.Div("You have selected: "+ str(index)),
+        html.Img(src=b64_image(image_filename3))
         ])
 
 # tab test data
@@ -135,6 +171,11 @@ def update_output2(n_clicks, input1):
     obj1= read_only(index)
     
     data = obj1
+    # get data
+    label  = data['label'].iloc[0]
+    label = str(label)
+
+    # data prep
     data.drop(data.columns[[0,1]], axis = 1, inplace = True)
     sample_size = data.shape[0]
     validation_size = int(data.shape[0]*0.1)
@@ -145,24 +186,18 @@ def update_output2(n_clicks, input1):
     plt.savefig("plt.png")
     # time.sleep(2)
     return  html.Div([
-    html.Div(
-        "You have selected: " + str(input1) + " ||||| Function used " + str(n_clicks)  + " amount of times|||||||||||||| RAW DATA = " 
-    ),html.Img(src=b64_image(image_filename))])
+        html.Div("You have selected index: " + str(input1) ),
+        html.Br(),
+        html.Div("Function used " + str(n_clicks) + " times" ),
+        html.Br(),
+        html.Div("Given number is:" + label  ),
+        html.Img(src=b64_image(image_filename))])
 
-
-    # return u'''
-    #     Function has been used {} times,\n \n
-    #     Index of one out of the database come out: "{}"
-    #     id: "{}"
-    #     data:image/png;base64,{}
-    # '''.format(n_clicks, obj1,input1,dataa  )
-
-# tab keras
+# tab keras CNN
 @app.callback(
     Output('container-button-basic', 'children'),
     Input('submit-val', 'n_clicks'),
-    State('input-on-submit', 'value')
-)
+    State('input-on-submit', 'value'))
 def update_output(n_clicks, value):
     # if zero no reposne or no reload of the page
     if n_clicks is None:
@@ -184,13 +219,13 @@ def update_output(n_clicks, value):
     plt.axis("off")
     plt.title("Predicted number:" + str(test_y[0]))
     plt.savefig("plt2.png")
-# save img
-
-
+    # save img
     return html.Div([
         html.Div("You have selected: "+ str(index)),
         html.Img(src=b64_image(image_filename2))
         ])
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
