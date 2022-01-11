@@ -27,6 +27,26 @@ import io
 # plt.title("Number of digit classes")
 
 # reading from the training data to give an insight!
+
+def read_set_test(index):
+    indexxx = int(index)
+
+    client = MongoClient()
+    #point the client at mongo URI
+    client =  MongoClient("mongodb+srv://mon:key@cluster0.wm7jq.mongodb.net/mydb?retryWrites=true&w=majority")
+    #select database
+    findByLabel = { "label": indexxx }
+    db = client['mydb']
+    #select the collection within the database
+    train = db.train
+    #convert entire collection to Pandas dataframe
+    test = pd.DataFrame(list(train.find(findByLabel)))
+    # mydoc = train.find(findByLabel)
+    # for x in mydoc:
+    #     print(x)
+
+    return test
+
 def read_only(index):
     indexxx = int(index)
 

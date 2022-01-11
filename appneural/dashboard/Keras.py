@@ -7,28 +7,20 @@ import cv2 as cv
 from keras.layers import Conv2D, Input, LeakyReLU, Dense, Activation, Flatten, Dropout, MaxPool2D
 from keras import models
 from keras.optimizers import Adam,RMSprop 
-from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ReduceLROnPlateau
 from keras.models import model_from_json
 import tensorflow as tf
 
-
+# loading in dataset then getting then use a numpy "random purmutation" 
 np.random.seed(1) # seed
 df_train = pd.read_csv("train.csv") # Loading Dataset
-
-
 df_train = df_train.iloc[np.random.permutation(len(df_train))] # Random permutaion for dataset (seed is used to resample the same permutation every time)
 # df_train.head(5)
 
-sample_size = df_train.shape[0] # Training set size
-validation_size = int(df_train.shape[0]*0.1) # Validation set size 
-
+# preparing training and validation data 
+sample_size = df_train.shape[0] 
+validation_size = int(df_train.shape[0]*0.1) 
 # train_x and train_y
 train_x = np.asarray(df_train.iloc[:sample_size-validation_size,1:]).reshape([sample_size-validation_size,28,28,1]) # taking all columns expect column 0
-
-
-
-
 train_y = np.asarray(df_train.iloc[:sample_size-validation_size,0]).reshape([sample_size-validation_size,1]) # taking column 0
 
 # val_x and val_y
@@ -36,7 +28,7 @@ val_x = np.asarray(df_train.iloc[sample_size-validation_size:,1:]).reshape([vali
 val_y = np.asarray(df_train.iloc[sample_size-validation_size:,0]).reshape([validation_size,1])
 
 # train_x.shape,train_y.shape
-# loading test csv
+# loading test csv and reshaping it to a numpy 28,28,28
 df_test = pd.read_csv("test.csv")
 test_x = np.asarray(df_test.iloc[:,:]).reshape([-1,28,28,1])
 
@@ -45,6 +37,8 @@ test_x = np.asarray(df_test.iloc[:,:]).reshape([-1,28,28,1])
 train_x = train_x/255
 val_x = val_x/255
 test_x = test_x/255
+
+# visualize datasets::::::::::::::::::::::::
 
 # # plotting the first 30 images
 # rows = 1 # defining no. of rows in figure
@@ -112,6 +106,8 @@ for i in range(rows*cols):
     plt.title(str(train_y[i]), y=-0.15,color="black")
 plt.savefig("digits.png")
 
+
+# tweeking model::::::flatten, dense , dropout layers
 model = models.Sequential()
 # Block 1
 model.add(Conv2D(32,3, padding  ="same",input_shape=(28,28,1)))
@@ -136,6 +132,7 @@ model.add(Dense(32,activation='relu'))
 model.add(Dense(10,activation="sigmoid"))
 
 initial_lr = 0.001
+# scc used for multiclass classifcation of the data
 loss = "sparse_categorical_crossentropy"
 model.compile(Adam(lr=initial_lr), loss=loss ,metrics=['accuracy'])
 model.summary()
@@ -144,9 +141,6 @@ model.summary()
 epochs = 10
 batch_size = 150
 history_1 = model.fit(train_x,train_y,batch_size=batch_size,epochs=epochs)
-
-
-
 
 
 # second try loading the model 
@@ -203,5 +197,42 @@ plt.legend()
 
 plt.show()
 
-# https://www.kaggle.com/tarunkr/digit-recognition-tutorial-cnn-99-67-accuracy#Buliding-Model
 
+# confusion_matrix:
+
+val_p = np.argmax(model.predict(val_x),axis =1)
+
+error = 0
+confusion_matrix = np.zeros([10,10])
+for i in range(val_x.shape[0]):
+    confusion_matrix[val_y[i],val_p[i]] += 1
+    if val_y[i]!=val_p[i]:
+        error +=1
+        
+print("Confusion Matrix: \n\n" ,confusion_matrix)
+print("\nErrors in validation set: " ,error)
+print("\nError Persentage : " ,(error*100)/val_p.shape[0])
+print("\nAccuracy : " ,100-(error*100)/val_p.shape[0])
+print("\nValidation set Shape :",val_p.shape[0])
+
+# plt confustion matrox for used dashboard
+f = plt.figure(figsize=(10,8.5))
+f.add_subplot(111)
+
+plt.imshow(np.log2(confusion_matrix+1),cmap="Reds")
+plt.colorbar()
+plt.tick_params(size=5,color="white")
+plt.xticks(np.arange(0,10),np.arange(0,10))
+plt.yticks(np.arange(0,10),np.arange(0,10))
+
+threshold = confusion_matrix.max()/2 
+
+for i in range(10):
+    for j in range(10):
+        plt.text(j,i,int(confusion_matrix[i,j]),horizontalalignment="center",color="white" if confusion_matrix[i, j] > threshold else "black")
+        
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.savefig("Confusion_matrix1.png")
+plt.show()

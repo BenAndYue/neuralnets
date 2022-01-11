@@ -7,7 +7,7 @@ import plotly.express as px
 import pandas as pd
 # from push import read_data
 from dash.dependencies import Input, Output, State
-from push import read_only, read_data, read_test
+from push import read_only, read_data, read_test,read_set_test
 import base64
 import io
 import matplotlib.pyplot as plt
@@ -38,6 +38,7 @@ def b64_image(image_filename):
 image_filename = 'plt.png'
 image_filename2 = 'plt2.png'
 image_filename3= 'plt3.png'
+image_filename4= 'train.png'
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
@@ -60,13 +61,19 @@ app.layout = html.Div([
                 selected_className='custom-tab--selected'
             ),
             dcc.Tab(
-                label='Keras CNN',
-                value='tab-3', className='custom-tab',
+                label='Training matrix',
+                value='tab-5', className='custom-tab',
                 selected_className='custom-tab--selected'
             ),
             dcc.Tab(
                 label='Keras DNN',
                 value='tab-4',
+                className='custom-tab',
+                selected_className='custom-tab--selected'
+            ),
+            dcc.Tab(
+                label='Keras CNN',
+                value='tab-3',
                 className='custom-tab',
                 selected_className='custom-tab--selected'
             ),
@@ -97,9 +104,9 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
     ),
     elif tab == 'tab-2':
         return html.Div([
-    html.Div('Look at the train data. A small sample of the test data is saved of the dast data because loading it would be to long.', className="app-header--title"),
+    html.Div('Look at the train data. A small sample of the test data is saved of the because loading it would be to long.', className="app-header--title"),
     html.Br(),
-    html.Div("Select a number between to display the data of the test data."),
+    html.Div("Select a number between -1-30 to display the data of the test data."),
     dcc.Input(id='input-1-state', type='number',max =29, min =-0),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
     html.Div(id='output-state'),
@@ -111,6 +118,7 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
         className="app-header",
         children=[
             html.Div('Keras CNN', className="app-header--title"),
+                html.Div('Select a number from 0-29 to pick a test document from the mongo database and run it throug the CNN model.'),
                 html.Div(dcc.Input(id='input-on-submit', type='number',max =29, min =-0)),
                 html.Button('Submit', id='submit-val', n_clicks=0),
                 html.Div(id='container-button-basic',
@@ -121,11 +129,59 @@ Each pixel column in the training set has a name like pixelx, where x is an inte
         className="app-header",
         children=[
             html.Div('Keras DNN', className="app-header--title"),
+            html.Div('Select a number from 0-29 to pick a test document from the mongo database and run it throug the DNN model.'),
                 html.Div(dcc.Input(id='input-on-submit2', type='number',max =29, min =-0)),
-                html.Button('Submit', id='submit-val2', n_clicks=0),
+                html.Button('Submit', id='submit-val2'),
                 html.Div(id='container-button-basic2',
                 children='Enter a value and press submit')
 ]),
+    elif tab == 'tab-5':
+        return html.Div([
+            html.Div("Choose a number between -1 - 10 to display a matrix of numbers from the train dataset."),
+            dcc.Input(id='my-id', type="number",max =10, min =-0),
+    html.Button('Click Me', id='button'),
+    html.Div(id='my-div')
+])
+# data training matrix
+@app.callback(
+    Output(component_id='my-div', component_property='children'),
+    [Input('button', 'n_clicks')],
+    state=[State(component_id='my-id', component_property='value')]
+)
+def update_output_div(n_clicks, input_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    if input_value== None:
+        return html.Div("No input " + str(n_clicks) ) 
+    index = int(input_value)
+    obj1= read_set_test(index)
+    
+    data = obj1
+    # get data
+    label  = data['label'].iloc[0]
+    label = str(label)
+
+    # data prep
+    data.drop(data.columns[[0,1]], axis = 1, inplace = True)
+    sample_size = data.shape[0]
+    validation_size = int(data.shape[0]*0.1)
+    train_x = np.asarray(data.iloc[:sample_size-validation_size,1:]).reshape([sample_size-validation_size,28,28,1])
+    rows = 1
+    cols = obj1.shape[0]
+
+    f = plt.figure(figsize=(2*cols,2*rows)) # defining a figure 
+
+    for i in range(rows*cols): 
+            f.add_subplot(rows,cols,i+1) # adding sub plot to figure on each iteration
+            plt.imshow(train_x[i].reshape([28,28]),cmap="Blues") 
+            plt.axis("off")
+    plt.savefig("train.png")
+    return html.Div([
+        html.Div("You have selected: "+ str(index)),
+        html.Img(src=b64_image(image_filename4))
+        ])
+
+
 # tab Keras DNN
 @app.callback(
     Output('container-button-basic2', 'children'),

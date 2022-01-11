@@ -4,18 +4,19 @@ import numpy as np
 import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
-import seaborn as sns
-warnings.filterwarnings('ignore')
 
+# loading datasets.
 train_df = pd.read_csv('train.csv')
 test_df = pd.read_csv('test.csv')
 
+# drop 
 train_target = train_df['label']
 train_features = train_df.drop(['label'], axis=1)
 
+# normalize..
 train_features = train_features/255.0
 
-# before train_features type: DataFrame
+# One-hot encoding
 print(train_features.shape, type(train_features))
 
 # after train_features type: ndarray
@@ -121,3 +122,7 @@ model.save('final_try2.h5')
 # load model
 # global model
 model = tf.keras.models.load_model('final_try.h5',compile=False)
+
+# roc
+rates, losses = find_learning_rate(model, X_train, y_train, epochs=1, batch_size=batch_size)
+plot_lr_vs_loss(rates, losses)
