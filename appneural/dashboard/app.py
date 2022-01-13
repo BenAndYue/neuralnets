@@ -176,6 +176,7 @@ def update_output_div(n_clicks, input_value):
             plt.imshow(train_x[i].reshape([28,28]),cmap="Blues") 
             plt.axis("off")
     plt.savefig("train.png")
+    plt.close
     return html.Div([
         html.Div("You have selected: "+ str(index)),
         html.Img(src=b64_image(image_filename4))
@@ -187,7 +188,7 @@ def update_output_div(n_clicks, input_value):
     Output('container-button-basic2', 'children'),
     Input('submit-val2', 'n_clicks'),
     State('input-on-submit2', 'value'))
-def update_output(n_clicks, value):
+def update_output3(n_clicks, value):
     # if zero no reposne or no reload of the page
     if n_clicks is None:
         raise PreventUpdate
@@ -204,6 +205,7 @@ def update_output(n_clicks, value):
     model = tf.keras.models.load_model('final_try2.h5',compile=False)
 
     test_y = np.argmax(model.predict(test_x),axis =1)
+    plt.figure()
     plt.imshow(test_x[0].reshape([28,28]),cmap="Blues")
     plt.axis("off")
     plt.title("Predicted number:" + str(test_y[0]))
@@ -271,6 +273,7 @@ def update_output(n_clicks, value):
     model = tf.keras.models.load_model('final_try.h5',compile=False)
 
     test_y = np.argmax(model.predict(test_x),axis =1)
+    plt.figure()
     plt.imshow(test_x[0].reshape([28,28]),cmap="Blues")
     plt.axis("off")
     plt.title("Predicted number:" + str(test_y[0]))

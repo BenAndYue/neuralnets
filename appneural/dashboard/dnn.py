@@ -83,8 +83,8 @@ def plot_lr_vs_loss(rates, losses):
     plt.ylabel("Loss")
     print('proper_rate:',min(rates))
 
-batch_size=32
-n_epochs=30
+batch_size=150
+n_epochs=10
 
 # class is identical so we use categorical_crossentropy
 model.compile(optimizer=keras.optimizers.Nadam(lr=1e-3), loss='categorical_crossentropy', metrics=['accuracy'])

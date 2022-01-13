@@ -2,12 +2,13 @@
 # Imports
 import pandas as pd
 from pymongo import MongoClient
-import pandas as pd
+
 import pymongo
 import matplotlib.pyplot as plt 
 import numpy as np
 import base64
 import io
+# import dask.dataframe as pd
 # Load csv dataset
 # data = pd.read_csv('test.csv')
 # data = data.drop(data.index[30:42000])
@@ -22,11 +23,7 @@ import io
 # # Insert collection
 # collection.insert_many(data_dict)
 
-# # plt.figure(figsize=(15,7))
-# g = sns.countplot(Y_train, palette="icefire")
-# plt.title("Number of digit classes")
 
-# reading from the training data to give an insight!
 
 def read_set_test(index):
     indexxx = int(index)
